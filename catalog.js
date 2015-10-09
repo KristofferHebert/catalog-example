@@ -2,29 +2,35 @@ import CatalogAPI from 'catalogAPI'
 
 function Catalog(){
 
-    let _data = {}
+    var _data = {}
 
-    const _arrayToObject = function _arrayToObject(type, array){
+    // Query by ID within array, then turn result into object
+    const _arrayToObject = function _arrayToObject(type, array, id){
+        let index = array.filter(function findByID(value) {
+            return value[0] === id
+        })
+
         let result = {
-            id: array[0],
-            display_name: array[3]
+            id: index[0],
+            display_name: index[3]
         }
 
         if(type === 'category'){
-            result.object_type = array[1],
-            result.stat_name = array[2]
+            result.object_type = index[1],
+            result.stat_name = index[2]
         } else {
-            result.category_id = array[1],
-            result.field_name = array[2]
+            result.category_id = index[1],
+            result.field_name = index[2]
         }
 
         return result;
     }
 
     const initialize = function initialize(){
+        const catalogapi = CatalogAPI()
         let fetchData = Promise.all([
-            CatalogAPI.getCategories(),
-            CatalogAPI.getMetrics()
+            catalogapi.getCategories(),
+            catalogapi.getMetrics()
         ])
 
         let successHandler = function successHandler(response){
@@ -42,23 +48,37 @@ function Catalog(){
     }
 
     const getCategoryById = function getCategoryById(id){
-
-        let result = _data.categories.filter(function findByID(value) {
-            value[0] === id
-        })
-        return _arrayToObject('category', result)
+        return _arrayToObject('category', _data.categories, id)
     }
 
-    const getMetricByStatString = function getMetricByStatString(id){
+    const _statStringtoObject = _statStringtoObject(type, statString){
+        let result = {}
 
+        if(type === 'category'){
+            result.objectType = statString.split(':')[0].split('.')[1]
+            result.statName = statString.split(':')[0].split('.')[2]
+        } else {
+            result.fieldName = statString.split(':')[1]
+        }
+        return result
+
+    }
+
+    const getCategoryByStatString = function getCategoryByStatString(statString){
+        let str = _statStringtoObject('category', statString)
+    }
+
+    const getMetricByStatString = function getMetricByStatString(statString){
+        let str = _statStringtoObject('metric', statString)
     }
 
     const getMetricById  = function getMetricById (id){
-
+        return _arrayToObject('metric', _data.metric, id)
     }
 
     return {
         initialize: initialize,
+        getCategoryByStatString: getCategoryByStatString,
         getCategoryById : getCategoryById,
         getMetricByStatString : getMetricByStatString,
         getMetricById : getMetricById
