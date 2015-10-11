@@ -1,4 +1,4 @@
-(function() {
+//(function() {
     'use strict'
 
     var catalog = Catalog()
@@ -14,4 +14,4 @@
         .initialize()
         .then(tests)
 
-}(window))
+//}(window))

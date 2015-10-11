@@ -1,5 +1,6 @@
-(function() {
+//(function() {
     'use strict'
+
     var CatalogStubAPI = function CatalogStubAPI() {
         // Mock data responses
         var categoryResponse = [
@@ -24,21 +25,14 @@
           [12, 4, 'tprocess', 'Server Processing Time']
         ]
 
-        // Helper function to generate promises
-        var _generatePromise = function _generatePromise(data){
-            return new Promise(function(resolve){
-                resolve(data)
-            })
-        }
-
         // Get Metrics data
         var getMetrics = function getMetrics(){
-            return _generatePromise(metricResponse)
+            return generatePromise(metricResponse)
         }
 
         // Get Category data
         var getCategories = function getCategories(){
-            return _generatePromise(categoryResponse)
+            return generatePromise(categoryResponse)
         }
 
         return {
@@ -49,10 +43,52 @@
 
     // fallback to stub function for data
     if (window.CatalogAPI === undefined) {
-        var CatalogAPI = CatalogStubAPI
+        var CatalogAPI = CatalogStubAPI()
     }
 
-    function Catalog() {
+    var CatalogProvider = function CatalogProvider(itemString){
+
+        var _LocalStorage = {
+            getItem: function getItem(itemString){
+                return JSON.parse(localStorage.getItem(itemString))
+            },
+            setItem : function setItem(itemString, itemValue){
+                return localStorage.setItem(itemString, JSON.stringify(itemValue))
+            },
+            clear: function clear(itemString){
+                return localStorage.clear(itemName)
+            }
+        }
+
+        // Check for item in localStorage
+        var item = _LocalStorage.getItem(itemString)
+        if(item){
+            console.log('Using cached response')
+            return generatePromise(item)
+        }
+
+        var itemMethod = 'get' + itemString
+
+        // Check for item in localStorage
+        if(CatalogAPI[itemMethod]){
+            item = CatalogAPI[itemMethod]()
+            item.then(function(data){
+                console.log('Using API response')
+                _LocalStorage.setItem(itemString, data)
+                return data
+            })
+            return item
+        }
+    }
+
+    // Helper function to generate promises
+    var generatePromise = function generatePromise(data){
+        return new Promise(function(resolve){
+            resolve(data)
+        })
+    }
+
+    var Catalog = function Catalog() {
 
         var _data = {}
 
@@ -100,10 +136,9 @@
         }
 
         var initialize = function initialize() {
-            var catalogapi = CatalogAPI()
             var fetchData = Promise.all([
-                catalogapi.getCategories(),
-                catalogapi.getMetrics()
+                CatalogProvider('Categories'),
+                CatalogProvider('Metrics')
             ])
 
             var successHandler = function successHandler(response) {
@@ -157,6 +192,7 @@
         }
 
         return {
+            _data: _data,
             initialize: initialize,
             getCategoryByStatString: getCategoryByStatString,
             getCategoryById: getCategoryById,
@@ -167,4 +203,4 @@
 
     window.Catalog = Catalog
 
-}(window))
+//}(window))
