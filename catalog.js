@@ -95,23 +95,27 @@
         // Query by ID within array, then turn result into object
         var _arrayToObject = function _arrayToObject(type, array, id) {
 
+            var isCategory = type === 'category'
             var index
+
             if (id && array.length > 1) {
-                index = array.filter(function findByID(arr) {
+                /* index = array.filter(function findByID(arr) {
                     return arr[0] === id
-                })
-                index = index[0]
+                }) */
+                index = array[id - 1]
 
             } else {
                 index = array
             }
+
+
 
             var result = {
                 id: index[0],
                 display_name: index[3]
             }
 
-            if (type === 'category') {
+            if (isCategory) {
                 result.object_type = index[1],
                     result.stat_name = index[2]
             } else {
@@ -163,28 +167,37 @@
 
         var getCategoryByStatString = function getCategoryByStatString(statString) {
             var stat = _statStringToObject('category', statString)
-            var category = _data.categories.filter(function findByStats(array) {
-                return stat.objectType === array[1] && stat.statName === array[2]
-            })
+            var array = _data.categories
+            var i = -1
+            var len = array.length
 
-            // if category exists, turn category into object, if not return undefined
-            if (category === undefined) {
-                return {
-                    results: null
+            while(i++ < len){
+                if(stat.objectType === array[i][1] && stat.statName === array[i][2]){
+                    var category = array[i]
+                    return _arrayToObject('category', category)
                 }
             }
 
-            return _arrayToObject('category', category[0])
+            return false
+
         }
 
         var getMetricByStatString = function getMetricByStatString(statString) {
             var stat = _statStringToObject('metric', statString)
             var category = getCategoryByStatString(statString)
-            var metric = _data.metrics.filter(function findByStats(array) {
-                return (category.id === array[1] && stat.fieldName === array[2])
-            })
 
-            return _arrayToObject('metric', metric[0])
+            var array = _data.metrics
+            var i = -1
+            var len = array.length
+
+            while(i++ < len){
+                if(category.id === array[i][1] && stat.fieldName === array[i][2]){
+                    var metric = array[i]
+                    return _arrayToObject('metric', metric)
+                }
+            }
+
+            return false
         }
 
         var getMetricById = function getMetricById(id) {
